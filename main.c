@@ -65,6 +65,8 @@ int main(int argc, char *argv[]) {
         numRandom[2] = rand() % (m - 1);
         numRandom[3] = rand() % (m - 1);
 
+        printf("Numero de procesos que corren: %d\n",numProcs); //Imprime el numero de procesos que corren
+
         /*Imprime los numeros random*/
         for (i = 0; i < 4; i++) {
             printf("Numero random %d = %d\n",i,numRandom[i]);
@@ -83,7 +85,6 @@ int main(int argc, char *argv[]) {
         /*Imprime la matrixA*/
         printf("\nMATRIZ A:\n");
         printMatrix(matrixA,m);
-
     }
 
     /*Envia los numeros random a los demas procesos*/
