@@ -3,39 +3,59 @@
 #include <stdlib.h>
 #include <time.h>
 
+
+
+void printMatrix(int *matrixA, int m){
+    int i,j;
+
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m; j++) {
+            printf("%d ", *(matrixA + (i * m) + j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 int main(int argc, char *argv[]) {
 
     int m;              //Tamano de matriz
 
+    int i,j;
+
     int numRandom[4];        //Numeros random [a,b,c,d]
 
-    int numprocs;       //Numero de procesos ejecutandose
+    int numProcs;       //Numero de procesos ejecutandose
 
     int pid;        //Numero de proceso
+
+    double starTimeAfterInput,starTimeTotal, endTime;
 
     int numLineasPorProc;
 
     MPI_Init(&argc, &argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs); //Averigua el numero de procesos
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs); //Averigua el numero de procesos
 
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
     if (pid == 0) {
-
+        starTimeTotal = MPI_Wtime();
 
         /*Pide m al usuario*/
         printf("Ingrese un valor : ");
         scanf("%d", &m);
 
-        /*Verifica que numprocs sea par y que m sea multiplo de numprocs*/
-        if (numprocs % 2 != 0 || m % numprocs != 0 || m < numprocs) {
+        starTimeAfterInput = MPI_Wtime();
+
+        /*Verifica que numProcs sea par y que m sea multiplo de numProcs*/
+        if (numProcs % 2 != 0 || m % numProcs != 0 || m < numProcs) {
             printf("ERROR\nIngrese un numero de procesos par y un m que sea multiplo del numero de procesos");
-	    MPI_Finalize();
-	    return(0);
+            MPI_Finalize();
+            return(0);
         }
 
-        numLineasPorProc = m / numprocs; //Calcula cuantas lineas tiene cada proceso
+        numLineasPorProc = m / numProcs; //Calcula cuantas lineas tiene cada proceso
 
         /*Genera los 4 numeros random*/
         srand(time(NULL));  //Genera semilla para los random
@@ -46,39 +66,39 @@ int main(int argc, char *argv[]) {
         numRandom[3] = rand() % (m - 1);
 
         /*Imprime los numeros random*/
-        int i = 0;
-        int j = 0;
-        for (i = 0; i < m; i++) {
+        for (i = 0; i < 4; i++) {
             printf("Numero random %d = %d\n",i,numRandom[i]);
         }
 
-        int *matrizA = (int *) malloc(m * m * sizeof(int));    //Asigna los espacios de la matriz A de tamano m * m
+        int *matrixA = (int *) malloc(m * m * sizeof(int));    //Asigna los espacios de la matriz A de tamano m * m
 
 
-        /*Llena la matrizA con numeros random de 0 a 5 inclusivo*/
-        i = 0;
-        j = 0;
+        /*Llena la matrixA con numeros random de 0 a 5 inclusivo*/
         for (i = 0; i < m; i++) {
             for (j = 0; j < m; j++) {
-                *(matrizA + (i * m) + j) = rand() % 6;
+                *(matrixA + (i * m) + j) = rand() % 6;
             }
         }
 
-        /*Imprime la matrizA*/
-        i = 0;
-        j = 0;
-        for (i = 0; i < m; i++) {
-            for (j = 0; j < m; j++) {
-                printf("%d ", *(matrizA + (i * m) + j));
-            }
-            printf("\n");
-        }
-	printf("\n");
+        /*Imprime la matrixA*/
+        printf("\nMATRIZ A:\n");
+        printMatrix(matrixA,m);
 
     }
-    
+
     /*Envia los numeros random a los demas procesos*/
     MPI_Bcast(numRandom, 4, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if(pid == 0){
+        endTime = MPI_Wtime();
+
+        printf("Tiempo total en ejecucion: %f\n",endTime-starTimeTotal);
+
+        printf("Tiempo total en ejecucion: %f  \n",endTime-starTimeAfterInput);
+    }
+
+
+
 
     MPI_Finalize();
 
