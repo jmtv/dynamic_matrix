@@ -108,21 +108,11 @@ int main(int argc, char *argv[]) {
     MPI_Scatter(matrixA, numLineasPorProc * m, MPI_INT, matrixALocal, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
 
     /*For anidado que recorre cada entero de la matriz local recibida*/
-    /*for(i = 0; i < numLineasPorProc; i++){
+    for(i = 0; i < numLineasPorProc; i++){
         for(j = 0; j < m; j++){
 
         }
-    }*/
-
-    int *disp = (int *)malloc(numLineasPorProc * m *
-                              sizeof(int));
-    /*Counter variables for the loop*/
-    for(i=0; i<numLineasPorProc; i++) {
-        for(j=0;j<m;j++) {
-            *(disp + (i*m) + j) = j;
-        }
     }
-
 
     /*Aqui se debe armar la matriz e imprimir informacion relevante*/
     if (pid == 0) {
