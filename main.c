@@ -4,7 +4,6 @@
 #include <time.h>
 
 
-
 void printMatrix(int *matrixA, int lenght, int width) {
 	int i, j;
 
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
 		if (numProcs % 2 != 0 || m % numProcs != 0 || m < numProcs) {
 			printf("ERROR\nIngrese un numero de procesos par y un m que sea multiplo del numero de procesos");
 			MPI_Finalize();
-			return(0);
+			return (0);
 		}
 
 		numLineasPorProc = m / numProcs; //Calcula cuantas lineas tiene cada proceso
@@ -103,24 +102,28 @@ int main(int argc, char *argv[]) {
 	/*Envia numLineasPorProc a los demas procesos*/
 	MPI_Bcast(&numLineasPorProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	int *matrixALocal = (int *)malloc(numLineasPorProc * m * sizeof(int));    //Asigna la memoria para cada fraccion de la matriz A que le toca a los procesos
+	int *matrixALocal = (int *)malloc(numLineasPorProc * m *
+		sizeof(int));    //Asigna la memoria para cada fraccion de la matriz A que le toca a los procesos
 
 	MPI_Scatter(matrixA, numLineasPorProc * m, MPI_INT, matrixALocal, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
 
-	MPI_Gather(matrixALocal, numLineasPorProc * m, MPI_INT, matrixB, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
-
-	if (pid
-		if (pid == 0) {
-			printf("\n\nMatriz B:\n");
-				printMatrix(matrixB, 9, m);
-				endTime = MPI_Wtime();
-
-				printf("Tiempo total en ejecucion: %f\n", endTime - starTimeTotal);
-
-				printf("Tiempo total en ejecucion: %f  \n", endTime - starTimeAfterInput);
-		}
 
 
+	if (pid == 0) {
+		MPI_Send(matrixALocal, m, MPI_INT, 0, 0, MPI_COMM_WORLD);
+	}
+
+	MPI_Recv(matrixB + m * 3, m, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+	if (pid == 0) {
+		printf("\n\nMatriz B:\n");
+		printMatrix(matrixB, 9, m);
+		endTime = MPI_Wtime();
+
+		printf("Tiempo total en ejecucion: %f\n", endTime - starTimeTotal);
+
+		printf("Tiempo total en ejecucion: %f  \n", endTime - starTimeAfterInput);
+	}
 
 
 	MPI_Finalize();
