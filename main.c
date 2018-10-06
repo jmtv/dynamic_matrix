@@ -88,9 +88,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        /*Imprime la matrixA*/
-        printf("\nMATRIZ A:\n");
-        printMatrix(matrixA, m, m);
+        /*La fila 2 de la matriz B es la fila 0 de la matriz A*/
+        for(i = 0; i < m; i++){
+            *(matrixB + (m * 2) + i) = *(matrixA + i);
+        }
     }
 
     /*Envia el m a todos los procesos*/
@@ -116,14 +117,17 @@ int main(int argc, char *argv[]) {
 
     /*Aqui se debe armar la matriz e imprimir informacion relevante*/
     if (pid == 0) {
+        /*Imprime la matrixA*/
+        printf("\nMATRIZ A:\n");
+        printMatrix(matrixA, m, m);
 
-        printMatrix(matrixALocal,numLineasPorProc,m);
+        /*Imprime la matrixB*/
         printf("\n\nMatriz B:\n");
         printMatrix(matrixB, 9, m);
+
+        /*Imprime los tiempos de ejecucion*/
         endTime = MPI_Wtime();
-
         printf("Tiempo total en ejecucion: %f\n", endTime - starTimeTotal);
-
         printf("Tiempo total en ejecucion: %f  \n", endTime - starTimeAfterInput);
     }
 
