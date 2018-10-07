@@ -114,33 +114,42 @@ int main(int argc, char *argv[]) {
      int *sumaB4;
      sumaB4= (int *)calloc(numLineasPorProc, sizeof(int));
 
-    int *firstHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
-    int *secondHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
+    int *firstHalfCol0; 
+    firstHalfCol0 = (int *)calloc(numLineasPorProc, sizeof(int));
+
+    int *secondHalfCol0;
+    secondHalfCol0 = (int *)calloc(numLineasPorProc, sizeof(int));
 
     /*For anidado que recorre cada entero de la matriz local recibida*/
     int columna, fila;
     for(fila = 0; fila < numLineasPorProc; fila++){
         for(columna = 0; columna < m; columna++){
+            
+            /*Operaciones para fila 0*/
             if(columna == numRandom[1] && pid < numProcs/2){
-                firstHalfCol0[fila] = *(matrixALocal + (fila * m) + columna);
+                secondHalfCol0[fila] = *(matrixALocal + (fila * m) + columna);
             }
 
-            if(columna == numRandom[0] && pid >= numProcs/2){
-                secondHalfCol0[fila] = *(matrixALocal + (fila * m) + columna);
-                printf("%d",*(secondHalfCol0 + fila));
+            else if(columna == numRandom[0] && pid >= numProcs/2){
+                firstHalfCol0[fila] = *(matrixALocal + (fila * m) + columna);
+                printf("%d",*(firstHalfCol0 + fila));
             }
+
+            /*Operaciones para fila 6*/
             sumaFilasB6[fila] =(*(matrixALocal + (fila  * m) +columna)) +sumaFilasB6[fila ];
 
+
+            /*Operaciones para fila 4*/
       	    if(columna ==1||columna ==(m-2)){
                 sumaB4[fila] =(*(matrixALocal + (fila  * m) + columna)) + sumaB4[fila ];
- 	     }
+ 	        }
 
         }
     }
 
-    MPI_Gather(firstHalfCol0, numLineasPorProc, MPI_INT, matrixB, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(firstHalfCol0, numLineasPorProc, MPI_INT, (matrixB), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
-    MPI_Gather(secondHalfCol0, numLineasPorProc, MPI_INT, matrixB + m/2, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(secondHalfCol0, numLineasPorProc, MPI_INT, (matrixB + m/2), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
   
     MPI_Gather(sumaFilasB6, numLineasPorProc, MPI_INT,  (matrixB + (m * 6)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
     
