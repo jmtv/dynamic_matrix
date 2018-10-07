@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <string.h>
 
 void printMatrix(int *matrixA, int lenght, int width) {
     int i, j;
@@ -107,6 +107,12 @@ int main(int argc, char *argv[]) {
                                       sizeof(int));    //Asigna la memoria para cada fraccion de la matriz A que le toca a los procesos
 
     MPI_Scatter(matrixA, numLineasPorProc * m, MPI_INT, matrixALocal, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
+     
+     int *sumaFilasB6;
+     sumaFilasB6= (int *)calloc(numLineasPorProc, sizeof(int));
+
+     int *sumaB4;
+     sumaB4= (int *)calloc(numLineasPorProc, sizeof(int));
 
     int *firstHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
     int *secondHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
@@ -123,12 +129,22 @@ int main(int argc, char *argv[]) {
                 *(secondHalfCol0 + fila) = *(matrixALocal + (fila * m) + columna);
                 printf("%d",*(secondHalfCol0 + fila));
             }
+            sumaFilasB6[i] =(*(matrixALocal + (i * m) + j)) +sumaFilasB6[i];
+
+      	    if(j==1||j==(m-2)){
+                sumaB4[i] =(*(matrixALocal + (i * m) + j)) + sumaB4[i];
+ 	        }
+
         }
     }
 
     MPI_Gather(firstHalfCol0, numLineasPorProc, MPI_INT, matrixB, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
     MPI_Gather(secondHalfCol0, numLineasPorProc, MPI_INT, matrixB + m/2, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+  
+    MPI_Gather(sumaFilasB6, numLineasPorProc, MPI_INT,  (matrixB + (m * 6)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    MPI_Gather(sumaB4, numLineasPorProc, MPI_INT,  (matrixB + (m * 4)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
     /*Aqui se debe armar la matriz e imprimir informacion relevante*/
     if (pid == 0) {
