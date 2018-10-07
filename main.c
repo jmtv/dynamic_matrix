@@ -42,16 +42,14 @@ int main(int argc, char *argv[]) {
 
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
-    //printf("Este es mi pid: %d\n",pid);
-
     if (pid == 0) {
         starTimeTotal = MPI_Wtime();
-
-        starTimeAfterInput = MPI_Wtime();
 
         /*Pide m al usuario*/
         printf("Ingrese un valor : ");
         scanf("%d", &m);
+
+        starTimeAfterInput = MPI_Wtime();
 
         /*Verifica que numProcs sea par y que m sea multiplo de numProcs*/
         if (numProcs % 2 != 0 || m % numProcs != 0 || m < numProcs) {
@@ -70,13 +68,6 @@ int main(int argc, char *argv[]) {
         numRandom[2] = rand() % (m - 1);
         numRandom[3] = rand() % (m - 1);
 
-        printf("Numero de procesos que corren: %d\n", numProcs); //Imprime el numero de procesos que corren
-
-        /*Imprime los numeros random*/
-        for (i = 0; i < 4; i++) {
-            printf("Numero random %d = %d\n", i, numRandom[i]);
-        }
-
         matrixA = (int *)malloc(m * m * sizeof(int));    //Asigna los espacios de la matriz A de tamano m * m
 
         matrixB = (int *)calloc(9 * m, sizeof(int));
@@ -87,6 +78,12 @@ int main(int argc, char *argv[]) {
                 *(matrixA + (i * m) + j) = rand() % 6;
             }
         }
+
+
+        /*Imprime la matrixA*/
+        printf("\nMATRIZ A:\n");
+        printMatrix(matrixA, m, m);
+
 
         /*La fila 2 de la matriz B es la fila 0 de la matriz A*/
         for(i = 0; i < m; i++){
@@ -103,23 +100,44 @@ int main(int argc, char *argv[]) {
     /*Envia numLineasPorProc a los demas procesos*/
     MPI_Bcast(&numLineasPorProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+    /*Envia numProcs a los demas procesos*/
+    MPI_Bcast(&numProcs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
     int *matrixALocal = (int *)malloc(numLineasPorProc * m *
                                       sizeof(int));    //Asigna la memoria para cada fraccion de la matriz A que le toca a los procesos
 
     MPI_Scatter(matrixA, numLineasPorProc * m, MPI_INT, matrixALocal, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
 
-    /*For anidado que recorre cada entero de la matriz local recibida*/
-    for(i = 0; i < numLineasPorProc; i++){
-        for(j = 0; j < m; j++){
+    int *firstHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
+    int *secondHalfCol0 = (int *)malloc(numLineasPorProc * sizeof(int));
 
+    /*For anidado que recorre cada entero de la matriz local recibida*/
+    int columna, fila;
+    for(fila = 0; fila < numLineasPorProc; fila++){
+        for(columna = 0; columna < m; columna++){
+            if(columna == numRandom[1] && pid < numProcs/2){
+                *(firstHalfCol0 + fila) = *(matrixALocal + (fila * m) + columna);
+            }
+
+            if(columna == numRandom[0] && pid >= numProcs/2){
+                *(secondHalfCol0 + fila) = *(matrixALocal + (fila * m) + columna);
+                printf("%d",*(secondHalfCol0 + fila));
+            }
         }
     }
 
+    MPI_Gather(firstHalfCol0, numLineasPorProc, MPI_INT, matrixB, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Gather(secondHalfCol0, numLineasPorProc, MPI_INT, matrixB + m/2, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+
     /*Aqui se debe armar la matriz e imprimir informacion relevante*/
     if (pid == 0) {
-        /*Imprime la matrixA*/
-        printf("\nMATRIZ A:\n");
-        printMatrix(matrixA, m, m);
+        printf("Numero de procesos que corren: %d\n", numProcs); //Imprime el numero de procesos que corren
+
+        /*Imprime los numeros random*/
+        for (i = 0; i < 4; i++) {
+            printf("Numero random %d = %d\n", i, numRandom[i]);
+        }
 
         /*Imprime la matrixB*/
         printf("\n\nMatriz B:\n");
@@ -128,7 +146,7 @@ int main(int argc, char *argv[]) {
         /*Imprime los tiempos de ejecucion*/
         endTime = MPI_Wtime();
         printf("Tiempo total en ejecucion: %f\n", endTime - starTimeTotal);
-        printf("Tiempo total en ejecucion: %f  \n", endTime - starTimeAfterInput);
+        printf("Tiempo total en ejecucion despues de input de usuario: %f  \n", endTime - starTimeAfterInput);
     }
 
 
