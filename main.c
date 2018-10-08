@@ -118,33 +118,46 @@ int main(int argc, char *argv[]) {
      
     int *sumaFilasB6 = (int *)calloc(numLineasPorProc, sizeof(int));
 
+    int *sumaColumnasB7 = (int *)calloc(m, sizeof(int));
+
+    int *sumaCincosB8 = (int *)calloc(m, sizeof(int));
+
     /*For anidado que recorre cada entero de la matriz local recibida*/
     int columna, fila;
     for(fila = 0; fila < numLineasPorProc; fila++){
         for(columna = 0; columna < m; columna++){
-            
+            int num = *(matrixALocal + (fila * m) + columna);
+
             /*Operaciones para fila 0*/
             if(columna == numRandom[1] && pid < numProcs/2){
-                segundaMitadFil0[fila] = *(matrixALocal + (fila * m) + columna);
+                segundaMitadFil0[fila] = num;
             }
 
             else if(columna == numRandom[0] && pid >= numProcs/2){
-                *(primeraMitadFil0 + fila) = *(matrixALocal + (fila * m) + columna);
+                *(primeraMitadFil0 + fila) = num;
             }
 
             /*Operaciones para fila 3*/
             if(columna == 0){
-                *(fila3 + fila) = *(matrixALocal + (fila * m) + columna);
+                *(fila3 + fila) = num;
                 printf("%d",*(fila3 + fila));
             }
 
             /*Operaciones para fila 4*/
       	    if(columna ==1||columna ==(m-2)){
-                sumaB4[fila] =(*(matrixALocal + (fila  * m) + columna)) + sumaB4[fila ];
+                sumaB4[fila] = num + sumaB4[fila ];
  	        }
 
             /*Operaciones para fila 6*/
-            sumaFilasB6[fila] =(*(matrixALocal + (fila  * m) +columna)) +sumaFilasB6[fila ];
+            sumaFilasB6[fila] = num +sumaFilasB6[fila ];
+
+            /*Operaciones para fila 7*/
+            *(sumaColumnasB7 + columna) = num + *(sumaColumnasB7 + fila);
+
+            /*Operaciones para fila 8*/
+            if(num == 5){
+                *(sumaCincosB8 + columna)++; 
+            }
         }
     }
 
@@ -152,11 +165,15 @@ int main(int argc, char *argv[]) {
 
     MPI_Gather(segundaMitadFil0, numLineasPorProc, MPI_INT, (matrixB + m/2), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
-    MPI_Gather(fila3, numLineasPorProc, MPI_INT, (matrixB + (m * 2)), numLineasPorProc, MPI??INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(fila3, numLineasPorProc, MPI_INT, (matrixB + (m * 3)), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Gather(sumaB4, numLineasPorProc, MPI_INT,  (matrixB + (m * 4)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
   
     MPI_Gather(sumaFilasB6, numLineasPorProc, MPI_INT,  (matrixB + (m * 6)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
-    
-    MPI_Gather(sumaB4, numLineasPorProc, MPI_INT,  (matrixB + (m * 4)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Reduce(sumaColumnasB7, (matrixB + (m*7)), m, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    MPI_Reduce(sumaCincosB8, (matrixB + (m*8)), m, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     /*Aqui se debe armar la matriz e imprimir informacion relevante*/
     if (pid == 0) {
