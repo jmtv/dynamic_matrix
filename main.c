@@ -108,9 +108,11 @@ int main(int argc, char *argv[]) {
 
     MPI_Scatter(matrixA, numLineasPorProc * m, MPI_INT, matrixALocal, numLineasPorProc * m, MPI_INT, 0, MPI_COMM_WORLD);
 
-    int *primeraMitadFil0 = (int *)calloc(numLineasPorProc, sizeof(int));
+    int *fila0 = (int *)calloc(numLineasPorProc, sizeof(int));
 
-    int *segundaMitadFil0 = (int *)calloc(numLineasPorProc, sizeof(int));
+    int *offsetV = (int *)calloc(m, sizeof(int));
+
+    int *numPorProceso = (int *)calloc(m, sizeof(int));
 
     int *fila3 = (int *)calloc(numLineasPorProc, sizeof(int));
 
@@ -130,17 +132,16 @@ int main(int argc, char *argv[]) {
 
             /*Operaciones para fila 0*/
             if(columna == numRandom[1] && pid < numProcs/2){
-                segundaMitadFil0[fila] = num;
+                *(fila0 + fila) = num;
             }
 
             else if(columna == numRandom[0] && pid >= numProcs/2){
-                *(primeraMitadFil0 + fila) = num;
+                *(fila0 + fila) = num;
             }
 
             /*Operaciones para fila 3*/
             if(columna == 0){
                 *(fila3 + fila) = num;
-                printf("%d",*(fila3 + fila));
             }
 
             /*Operaciones para fila 4*/
@@ -156,14 +157,26 @@ int main(int argc, char *argv[]) {
 
             /*Operaciones para fila 8*/
             if(num == 5){
-                *(sumaCincosB8 + columna)++; 
+                *(sumaCincosB8 + columna) += 1; 
             }
         }
     }
 
-    MPI_Gather(primeraMitadFil0, numLineasPorProc, MPI_INT, (matrixB), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+    /*Crea los vectores para el GatherV (offsets y numero de procesos)*/
+    int count = 0;
+    for(i = 0; i < m; i++){
+        if(i < numProcs/2){
+            *(offsetV + i) = m/2 + i;
+        }
+        else{
+            *(offsetV + i) = count;
+	    count++;
+        }
 
-    MPI_Gather(segundaMitadFil0, numLineasPorProc, MPI_INT, (matrixB + m/2), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+        *(numPorProceso + i) = numLineasPorProc;
+    }
+
+    MPI_Gatherv(fila0, numLineasPorProc, MPI_INT, (matrixB), numPorProceso, offsetV, MPI_INT, 0, MPI_COMM_WORLD);
 
     MPI_Gather(fila3, numLineasPorProc, MPI_INT, (matrixB + (m * 3)), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
