@@ -111,6 +111,8 @@ int main(int argc, char *argv[]) {
     int *fila0 = (int *)calloc(numLineasPorProc, sizeof(int));
 
     int *offsetV = (int *)calloc(m, sizeof(int));
+	
+    int *multiporColumnaDB1= (int *)calloc(numLineasPorProc, sizeof(int));
 
     int *numPorProceso = (int *)calloc(m, sizeof(int));
 
@@ -123,6 +125,12 @@ int main(int argc, char *argv[]) {
     int *sumaColumnasB7 = (int *)calloc(m, sizeof(int));
 
     int *sumaCincosB8 = (int *)calloc(m, sizeof(int));
+	
+    int *pedazofilaC_ALocal = (int *)calloc(numLineasPorProc, sizeof(int));  //Asigna la memoria para cada fraccion de la fila c de matriz A que le toca a los procesos
+	
+    MPI_Scatter( matrixA + (m * numRandom[2]), numLineasPorProc, MPI_INT,pedazofilaC_ALocal, numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
+
+
 
     /*For anidado que recorre cada entero de la matriz local recibida*/
     int columna, fila;
@@ -138,6 +146,11 @@ int main(int argc, char *argv[]) {
             else if(columna == numRandom[0] && pid >= numProcs/2){
                 *(fila0 + fila) = num;
             }
+		
+	    /*Operaciones para fila B1 multiplicar por pedazo de fila c de matrizA*/
+	    if(columna==numRandom[3]){
+		multiporColumnaDB1[fila]=(*(pedazofilaC_ALocal+fila))*(*(matrixALocal + (fila * m) +columna));
+	    }
 
             /*Operaciones para fila 3*/
             if(columna == 0){
@@ -177,6 +190,8 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Gatherv(fila0, numLineasPorProc, MPI_INT, (matrixB), numPorProceso, offsetV, MPI_INT, 0, MPI_COMM_WORLD);
+	
+    MPI_Gather(multiporColumnaDB1, numLineasPorProc, MPI_INT,  (matrixB + (m * 1)) , numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
     MPI_Gather(fila3, numLineasPorProc, MPI_INT, (matrixB + (m * 3)), numLineasPorProc, MPI_INT, 0, MPI_COMM_WORLD);
 
